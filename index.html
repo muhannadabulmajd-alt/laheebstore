@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لهيب | المتجر قادم قريباً</title>
+  <meta name="description" content="متجر لهيب قادم قريباً. يمكنكم استكشاف منتجات لهيب والتواصل معنا للطلبات والدعم." />
+  <meta name="theme-color" content="#4B2418" />
+
+  <style>
+    :root {
+      --coffee-dark: #24130D;
+      --coffee-brown: #4B2418;
+      --roast-brown: #7A3E26;
+      --ember: #C45A2A;
+      --gold: #D9A441;
+      --cream: #FFF7EC;
+      --ivory: #F6E8D3;
+      --latte: #D8B98C;
+      --muted: #8B6F5C;
+      --white: #FFFFFF;
+      --shadow: 0 28px 80px rgba(36, 19, 13, 0.24);
+      --radius-xl: 32px;
+      --radius-md: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family:
+        "IBM Plex Sans Arabic",
+        "Tajawal",
+        "Cairo",
+        "Noto Kufi Arabic",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      color: var(--cream);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(217, 164, 65, 0.22), transparent 28%),
+        radial-gradient(circle at 84% 14%, rgba(196, 90, 42, 0.22), transparent 30%),
+        linear-gradient(135deg, var(--coffee-dark) 0%, var(--coffee-brown) 48%, #160B07 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 247, 236, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 247, 236, 0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, black, transparent 76%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 28px;
+    }
+
+    .card {
+      width: min(1120px, 100%);
+      min-height: 680px;
+      display: grid;
+      grid-template-columns: 1.03fr 0.97fr;
+      gap: 0;
+      border: 1px solid rgba(255, 247, 236, 0.18);
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(180deg, rgba(255, 247, 236, 0.11), rgba(255, 247, 236, 0.055)),
+        rgba(36, 19, 13, 0.64);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(18px);
+    }
+
+    .content {
+      padding: clamp(34px, 5vw, 68px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 42px;
+    }
+
+    .flame-mark {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 78%, rgba(255, 247, 236, 0.94) 0 12%, transparent 13%),
+        linear-gradient(145deg, var(--gold), var(--ember) 55%, var(--roast-brown));
+      box-shadow: 0 16px 34px rgba(196, 90, 42, 0.28);
+      color: var(--coffee-dark);
+    }
+
+    .flame-mark svg {
+      width: 34px;
+      height: 34px;
+      filter: drop-shadow(0 4px 10px rgba(36, 19, 13, 0.18));
+    }
+
+    .brand-text { line-height: 1.05; }
+
+    .brand-text strong {
+      display: block;
+      font-size: clamp(1.9rem, 3vw, 2.7rem);
+      letter-spacing: -0.04em;
+      color: var(--cream);
+    }
+
+    .brand-text span {
+      display: block;
+      margin-top: 7px;
+      color: rgba(255, 247, 236, 0.7);
+      font-size: 0.95rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      direction: ltr;
+      text-align: right;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border: 1px solid rgba(217, 164, 65, 0.36);
+      border-radius: 999px;
+      color: var(--ivory);
+      background: rgba(217, 164, 65, 0.10);
+      font-size: 0.96rem;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 99px;
+      background: var(--gold);
+      box-shadow: 0 0 0 6px rgba(217, 164, 65, 0.12);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 690px;
+      font-size: clamp(3rem, 7vw, 6.6rem);
+      line-height: 0.98;
+      letter-spacing: -0.07em;
+      color: var(--cream);
+    }
+
+    .lead {
+      max-width: 610px;
+      margin: 26px 0 0;
+      color: rgba(255, 247, 236, 0.78);
+      font-size: clamp(1.05rem, 1.55vw, 1.28rem);
+      line-height: 1.95;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 38px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 54px;
+      padding: 14px 20px;
+      border-radius: 999px;
+      font-weight: 800;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      will-change: transform;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .button.primary {
+      background: var(--cream);
+      color: var(--coffee-dark);
+      box-shadow: 0 16px 36px rgba(255, 247, 236, 0.18);
+    }
+
+    .button.primary:hover,
+    .button.primary:focus-visible {
+      box-shadow: 0 20px 42px rgba(255, 247, 236, 0.26);
+    }
+
+    .button.secondary {
+      border: 1px solid rgba(255, 247, 236, 0.24);
+      background: rgba(255, 247, 236, 0.075);
+      color: var(--cream);
+    }
+
+    .button.secondary:hover,
+    .button.secondary:focus-visible {
+      background: rgba(255, 247, 236, 0.12);
+    }
+
+    .contact-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+      color: rgba(255, 247, 236, 0.68);
+      font-size: 0.98rem;
+    }
+
+    .contact-strip a {
+      color: var(--cream);
+      border-bottom: 1px solid rgba(255, 247, 236, 0.32);
+      direction: ltr;
+      unicode-bidi: embed;
+    }
+
+    .visual {
+      position: relative;
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: clamp(32px, 5vw, 68px);
+      background:
+        radial-gradient(circle at 50% 36%, rgba(217, 164, 65, 0.20), transparent 38%),
+        linear-gradient(180deg, rgba(255, 247, 236, 0.08), rgba(255, 247, 236, 0.025));
+      isolation: isolate;
+    }
+
+    .visual::before {
+      content: "";
+      position: absolute;
+      inset: 32px;
+      border: 1px solid rgba(255, 247, 236, 0.12);
+      border-radius: 28px;
+      z-index: -1;
+    }
+
+    .coffee-bag {
+      position: relative;
+      width: min(330px, 82vw);
+      aspect-ratio: 0.72 / 1;
+      border-radius: 26px 26px 22px 22px;
+      background:
+        linear-gradient(95deg, rgba(255, 255, 255, 0.09), transparent 24%),
+        linear-gradient(180deg, #8A4A2C 0%, #5A2D1E 54%, #321A12 100%);
+      box-shadow:
+        0 42px 90px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      transform: rotate(-2deg);
+      overflow: hidden;
+    }
+
+    .coffee-bag::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(255, 247, 236, 0.10), transparent 18%, transparent 74%, rgba(0,0,0,0.15)),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 8px);
+      mix-blend-mode: soft-light;
+    }
+
+    .bag-top {
+      position: absolute;
+      top: 0;
+      inset-inline: 0;
+      height: 66px;
+      background: linear-gradient(180deg, rgba(36, 19, 13, 0.72), rgba(36, 19, 13, 0.14));
+      border-bottom: 1px solid rgba(255, 247, 236, 0.12);
+    }
+
+    .label {
+      position: absolute;
+      left: 32px;
+      right: 32px;
+      top: 112px;
+      bottom: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 18px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, var(--cream), var(--ivory));
+      color: var(--coffee-brown);
+      text-align: center;
+      box-shadow: inset 0 0 0 1px rgba(75, 36, 24, 0.08);
+    }
+
+    .label .mini-flame {
+      width: 52px;
+      height: 52px;
+      margin-bottom: 16px;
+      border-radius: 50% 50% 50% 8%;
+      transform: rotate(-45deg);
+      background: linear-gradient(135deg, var(--ember), var(--gold));
+    }
+
+    .label h2 {
+      margin: 0;
+      font-size: clamp(2.35rem, 4vw, 3.7rem);
+      line-height: 1;
+      letter-spacing: -0.06em;
+    }
+
+    .label p {
+      margin: 10px 0 0;
+      color: rgba(75, 36, 24, 0.72);
+      font-weight: 800;
+      direction: ltr;
+      letter-spacing: 0.09em;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+    }
+
+    .bag-footer {
+      position: absolute;
+      right: 32px;
+      left: 32px;
+      bottom: 34px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: rgba(255, 247, 236, 0.76);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .steam {
+      position: absolute;
+      inset: auto auto 78% 52%;
+      width: 120px;
+      height: 180px;
+      transform: translateX(-50%);
+      opacity: 0.6;
+      filter: blur(0.2px);
+      pointer-events: none;
+    }
+
+    .steam span {
+      position: absolute;
+      bottom: 0;
+      width: 16px;
+      height: 120px;
+      border-radius: 50%;
+      border-right: 2px solid rgba(255, 247, 236, 0.26);
+      animation: steam 4.2s ease-in-out infinite;
+    }
+
+    .steam span:nth-child(1) { right: 20px; animation-delay: 0s; }
+    .steam span:nth-child(2) { right: 50px; animation-delay: 0.8s; height: 150px; }
+    .steam span:nth-child(3) { right: 80px; animation-delay: 1.4s; height: 130px; }
+
+    .bean {
+      position: absolute;
+      width: 18px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #5B2C1D, #21110B);
+      box-shadow: inset 3px 0 0 rgba(255, 247, 236, 0.10);
+      opacity: 0.75;
+    }
+
+    .bean::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      right: 8px;
+      width: 2px;
+      border-radius: 8px;
+      background: rgba(255, 247, 236, 0.18);
+      transform: rotate(10deg);
+    }
+
+    .bean.one { top: 16%; right: 14%; transform: rotate(28deg); }
+    .bean.two { bottom: 15%; right: 12%; transform: rotate(-18deg); }
+    .bean.three { bottom: 22%; left: 12%; transform: rotate(48deg); }
+
+    .footer-note {
+      position: absolute;
+      bottom: 20px;
+      inset-inline: 28px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      color: rgba(255, 247, 236, 0.52);
+      font-size: 0.9rem;
+    }
+
+    .footer-note span:last-child {
+      direction: ltr;
+      text-align: left;
+    }
+
+    @keyframes steam {
+      0%, 100% { transform: translateY(18px) scaleX(0.8); opacity: 0; }
+      35% { opacity: 0.72; }
+      70% { transform: translateY(-46px) scaleX(1.25); opacity: 0.16; }
+    }
+
+    @media (max-width: 880px) {
+      .page {
+        padding: 16px;
+        align-items: start;
+      }
+
+      .card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .content {
+        order: 2;
+        padding: 34px 24px 42px;
+      }
+
+      .visual {
+        order: 1;
+        min-height: 430px;
+        padding: 38px 22px;
+      }
+
+      .brand { margin-bottom: 26px; }
+      .actions { margin-top: 30px; }
+      .button { width: 100%; }
+
+      .footer-note {
+        position: static;
+        flex-direction: column;
+        margin-top: 22px;
+        padding: 0 24px 24px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="card" aria-label="صفحة قادمة قريباً لمتجر لهيب">
+      <div class="content">
+        <a class="brand" href="https://laheeb.thewayl.com" target="_blank" rel="noopener" aria-label="زيارة متجر لهيب الحالي">
+          <span class="flame-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" role="img">
+              <path d="M33.7 6.5c1.5 8.2-3.8 12.8-8.7 18.7-4.4 5.2-7.7 10.6-7.7 18.1 0 10.1 6.9 17.2 15.6 17.2 10.3 0 18-7.6 18-18.6 0-8.5-4.8-15.4-10.6-20.9.1 5.3-1.9 8.4-5 11.5 1.1-8.7-1.3-17.5-1.6-26Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="brand-text">
+            <strong>لهيب</strong>
+            <span>Laheeb Coffee</span>
+          </span>
+        </a>
+
+        <div class="eyebrow">نحضّر شيئاً ألذ لكم</div>
+
+        <h1>المتجر قادم قريباً</h1>
+
+        <p class="lead">
+          نرتّب تجربة متجر لهيب حتى تكون أسهل، أوضح، وأقرب لطعم القهوة الطازجة.
+          إلى أن يكتمل المتجر، يمكنكم استكشاف منتجات لهيب الحالية والتواصل معنا للطلبات والدعم.
+        </p>
+
+        <nav class="actions" aria-label="روابط مهمة">
+          <a class="button primary" href="https://laheeb.thewayl.com" target="_blank" rel="noopener">
+            استكشف منتجات لهيب
+          </a>
+
+          <a class="button secondary" href="https://wa.me/9647752876543" target="_blank" rel="noopener">
+            تواصل واتساب
+          </a>
+
+          <a class="button secondary" href="https://www.instagram.com/laheeb.coffee" target="_blank" rel="noopener">
+            تابعنا على إنستغرام
+          </a>
+        </nav>
+
+        <div class="contact-strip" aria-label="معلومات التواصل">
+          <span>الدعم والطلبات:</span>
+          <a href="https://wa.me/9647752876543" target="_blank" rel="noopener">+964 775 2876 543</a>
+          <span>·</span>
+          <a href="https://www.instagram.com/laheeb.coffee" target="_blank" rel="noopener">@laheeb.coffee</a>
+        </div>
+      </div>
+
+      <div class="visual" aria-hidden="true">
+        <div class="steam"><span></span><span></span><span></span></div>
+        <span class="bean one"></span>
+        <span class="bean two"></span>
+        <span class="bean three"></span>
+
+        <div class="coffee-bag">
+          <div class="bag-top"></div>
+          <div class="label">
+            <div class="mini-flame"></div>
+            <h2>لهيب</h2>
+            <p>Fresh Roasted Coffee</p>
+          </div>
+          <div class="bag-footer">
+            <span>قهوة محمّصة</span>
+            <span>طازجة</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        <span>© لهيب كوفي — كل الحقوق محفوظة</span>
+        <span>Roasted today. Brewed your way.</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
