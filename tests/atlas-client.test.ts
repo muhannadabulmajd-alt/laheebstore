@@ -51,6 +51,42 @@ describe('Atlas server client', () => {
     expect(result.products[0].variations[0].imageUrl).toBe('https://images.example.com/external.jpg');
   });
 
+  it('never exposes legacy private Blob URLs returned by an older Atlas deployment', async () => {
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    const privateBlob = 'https://store.private.blob.vercel-storage.com/product.png';
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      products: [{
+        slug: 'turkish-coffee',
+        imageUrl: privateBlob,
+        variations: [{ slug: 'turkish-cardamom-225', imageUrl: privateBlob }],
+      }],
+      orders: [{
+        lines: [{ productSlug: 'turkish-cardamom-225', imageUrl: privateBlob }],
+      }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { atlasRequest } = await import('@/lib/atlas-client');
+    const result = await atlasRequest<{
+      products: Array<{
+        imageUrl: string;
+        variations: Array<{ imageUrl: string }>;
+      }>;
+      orders: Array<{ lines: Array<{ imageUrl: string }> }>;
+    }>('/api/storefront/v1/catalog');
+
+    expect(result.products[0].imageUrl).toBe(
+      `${env.NEXT_PUBLIC_SITE_URL}/api/media/groups/turkish-coffee`,
+    );
+    expect(result.products[0].variations[0].imageUrl).toBe(
+      `${env.NEXT_PUBLIC_SITE_URL}/api/media/products/turkish-cardamom-225`,
+    );
+    expect(result.orders[0].lines[0].imageUrl).toBe(
+      `${env.NEXT_PUBLIC_SITE_URL}/api/media/products/turkish-cardamom-225`,
+    );
+    expect(JSON.stringify(result)).not.toContain(privateBlob);
+  });
+
   it('proxies binary media with signed headers and conditional caching', async () => {
     for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
     const fetchMock = vi.fn<(

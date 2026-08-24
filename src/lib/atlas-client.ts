@@ -22,6 +22,18 @@ type AtlasRequestOptions = {
 
 const ATLAS_MEDIA_PREFIX = '/api/storefront/v1/media/';
 
+function isManagedAtlasBlob(value: string): boolean {
+  try {
+    return new URL(value).hostname.endsWith('.blob.vercel-storage.com');
+  } catch {
+    return false;
+  }
+}
+
+function mediaProxyUrl(siteUrl: string, target: 'products' | 'groups', slug: string): string {
+  return `${siteUrl}/api/media/${target}/${encodeURIComponent(slug)}`;
+}
+
 export function localizeAtlasMediaUrls<T>(value: T, siteUrl: string): T {
   if (typeof value === 'string' && value.startsWith(ATLAS_MEDIA_PREFIX)) {
     return `${siteUrl}/api/media/${value.slice(ATLAS_MEDIA_PREFIX.length)}` as T;
@@ -30,9 +42,25 @@ export function localizeAtlasMediaUrls<T>(value: T, siteUrl: string): T {
     return value.map((item) => localizeAtlasMediaUrls(item, siteUrl)) as T;
   }
   if (value && typeof value === 'object') {
-    return Object.fromEntries(
+    const localized = Object.fromEntries(
       Object.entries(value).map(([key, item]) => [key, localizeAtlasMediaUrls(item, siteUrl)]),
-    ) as T;
+    ) as Record<string, unknown>;
+    const source = localized.imageUrl;
+    if (typeof source === 'string' && isManagedAtlasBlob(source)) {
+      const slug = typeof localized.slug === 'string'
+        ? localized.slug
+        : typeof localized.productSlug === 'string'
+          ? localized.productSlug
+          : null;
+      if (slug) {
+        localized.imageUrl = mediaProxyUrl(
+          siteUrl,
+          Array.isArray(localized.variations) ? 'groups' : 'products',
+          slug,
+        );
+      }
+    }
+    return localized as T;
   }
   return value;
 }

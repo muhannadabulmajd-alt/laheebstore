@@ -7,12 +7,18 @@ test('catalog to COD checkout uses live Preview catalog and Atlas quote', async 
 
   await unlockProtectedPreview(page, baseURL!, process.env.PLAYWRIGHT_STORE_SHARE_TOKEN);
   await page.goto('/en');
-  const firstProduct = page.locator('.product-card').first();
-  await expect(firstProduct).toBeVisible();
-  const productImage = firstProduct.locator('img');
+  const productWithImage = page.locator('.product-card').filter({ has: page.locator('img') }).first();
+  await expect(productWithImage).toBeVisible();
+  const productImage = productWithImage.locator('img');
   await expect(productImage).toBeVisible();
   expect(await productImage.getAttribute('src')).toContain('/api/media/');
-  await firstProduct.locator('a[href*="/products/"]').first().click();
+  await expect.poll(() => productImage.evaluate((image) => (image as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
+  await page.reload();
+  await expect.poll(() => productWithImage.locator('img')
+    .evaluate((image) => (image as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
+  await productWithImage.locator('a[href*="/products/"]').first().click();
 
   const addButton = page.getByRole('button', { name: 'Add to cart' });
   await expect(addButton).toBeEnabled();
