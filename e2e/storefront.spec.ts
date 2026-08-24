@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { unlockProtectedPreview } from './preview-access';
 
-test('catalog to COD checkout uses live Preview catalog and Atlas quote', async ({ page, baseURL }) => {
+test('catalog to COD checkout uses live Preview catalog and Atlas quote', async ({ page, baseURL }, testInfo) => {
   expect(baseURL, 'PLAYWRIGHT_BASE_URL must target the Store Preview').toBeTruthy();
   expect(new URL(baseURL!).hostname).not.toBe('laheeb.coffee');
+
+  const phoneSuffix = String((Date.now() + testInfo.workerIndex) % 100_000_000).padStart(8, '0');
+  const previewPhone = `077${phoneSuffix}`;
 
   await unlockProtectedPreview(page, baseURL!, process.env.PLAYWRIGHT_STORE_SHARE_TOKEN);
   await page.goto('/en');
@@ -28,7 +31,7 @@ test('catalog to COD checkout uses live Preview catalog and Atlas quote', async 
   await page.getByRole('link', { name: 'Checkout', exact: true }).click();
 
   await page.getByLabel('Full name').fill('Storefront Preview Test');
-  await page.getByLabel('Mobile number').fill('07700000001');
+  await page.getByLabel('Mobile number').fill(previewPhone);
   await page.getByLabel('Governorate').fill('Baghdad');
   await page.getByLabel('Address').fill('Preview verification address');
   await page.getByLabel('Cash on delivery').check();
