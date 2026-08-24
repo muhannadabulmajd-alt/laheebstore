@@ -18,3 +18,7 @@ Do not add Wayl or Vercel Blob credentials to this project. Atlas owns payment a
 Wayl support confirmed that Atlas Preview and Production both use `https://api.thewayl.com`.
 Environment isolation remains in Atlas through separate credentials and `WAYL_ENV=test` for
 Preview versus `WAYL_ENV=live` for Production; the Store never receives those credentials.
+
+Atlas issues a checkout-scoped access token only to this Store server. The Store encrypts it
+inside a secure, HTTP-only, same-site cookie and strips it from every browser response. The
+payment return page uses that cookie to request the authoritative Wayl-backed checkout status.

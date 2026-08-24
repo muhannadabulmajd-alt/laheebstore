@@ -26,6 +26,11 @@ both call `https://api.thewayl.com`; Atlas keeps them isolated with separate cre
 `WAYL_ENV=test` for Preview versus `WAYL_ENV=live` for Production. Do not add Wayl variables
 to this Store project.
 
+Checkout status is not public by checkout ID. Atlas returns a checkout-scoped access token to
+the Store server, which is kept only in an encrypted HTTP-only cookie derived from
+`AUTH_SECRET`. The token must never be logged, returned from a Store API response, or added to
+client state.
+
 ## Protected Preview verification
 
 Generate an automation bypass under the Store project's Vercel Deployment Protection

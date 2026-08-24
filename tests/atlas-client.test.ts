@@ -145,6 +145,24 @@ describe('Atlas server client', () => {
     expect(headers['x-atlas-signature']).toMatch(/^[a-f\d]{64}$/);
   });
 
+  it('keeps checkout access credentials in the server-to-server request only', async () => {
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () =>
+      new Response(JSON.stringify({ checkout: { id: 'checkout-1234' } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { atlasRequest } = await import('@/lib/atlas-client');
+    await atlasRequest('/api/storefront/v1/checkouts/checkout-1234', {
+      checkoutAccessToken: 't'.repeat(43),
+    });
+    const [, init] = fetchMock.mock.calls[0];
+    const headers = init?.headers as Record<string, string>;
+    expect(headers['x-storefront-checkout-token']).toBe('t'.repeat(43));
+    expect(headers['x-atlas-signature']).toMatch(/^[a-f\d]{64}$/);
+  });
+
   it('retries a transient checkout failure only when the request is idempotent', async () => {
     for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
     const fetchMock = vi.fn()

@@ -18,6 +18,7 @@ type AtlasRequestOptions = {
   signal?: AbortSignal;
   accept?: string;
   ifNoneMatch?: string | null;
+  checkoutAccessToken?: string;
 };
 
 const ATLAS_MEDIA_PREFIX = '/api/storefront/v1/media/';
@@ -87,6 +88,9 @@ async function atlasFetch(path: string, options: AtlasRequestOptions = {}): Prom
   if (body) headers['Content-Type'] = 'application/json';
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
   if (options.authorization) headers.Authorization = `Bearer ${options.authorization}`;
+  if (options.checkoutAccessToken) {
+    headers['x-storefront-checkout-token'] = options.checkoutAccessToken;
+  }
   if (options.ifNoneMatch) headers['If-None-Match'] = options.ifNoneMatch;
   if (config.atlasVercelBypassSecret) {
     headers['x-vercel-protection-bypass'] = config.atlasVercelBypassSecret;
