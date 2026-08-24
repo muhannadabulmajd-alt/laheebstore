@@ -30,6 +30,57 @@ describe('Atlas server client', () => {
     expect(JSON.stringify(init)).not.toContain(env.ATLAS_STOREFRONT_API_KEY);
   });
 
+  it('rewrites only Atlas media references to the Store media proxy', async () => {
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      products: [{
+        imageUrl: '/api/storefront/v1/media/products/turkish-coffee',
+        variations: [{ imageUrl: 'https://images.example.com/external.jpg' }],
+      }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { atlasRequest } = await import('@/lib/atlas-client');
+    const result = await atlasRequest<{
+      products: Array<{ imageUrl: string; variations: Array<{ imageUrl: string }> }>;
+    }>('/api/storefront/v1/catalog');
+
+    expect(result.products[0].imageUrl).toBe(
+      `${env.NEXT_PUBLIC_SITE_URL}/api/media/products/turkish-coffee`,
+    );
+    expect(result.products[0].variations[0].imageUrl).toBe('https://images.example.com/external.jpg');
+  });
+
+  it('proxies binary media with signed headers and conditional caching', async () => {
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    const fetchMock = vi.fn<(
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => Promise<Response>>(async () => new Response(new Uint8Array([137, 80, 78, 71]), {
+      status: 200,
+      headers: { 'Content-Type': 'image/png', ETag: 'preview-etag' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { atlasMediaResponse } = await import('@/lib/atlas-client');
+    const response = await atlasMediaResponse(
+      '/api/storefront/v1/media/products/turkish-coffee',
+      'previous-etag',
+    );
+    expect(response.status).toBe(200);
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      `${env.ATLAS_API_URL}/api/storefront/v1/media/products/turkish-coffee`,
+    );
+    const headers = init?.headers as Record<string, string>;
+    expect(headers.Accept).toContain('image/');
+    expect(headers['If-None-Match']).toBe('previous-etag');
+    expect(headers.Origin).toBe(env.NEXT_PUBLIC_SITE_URL);
+    expect(headers['x-atlas-signature']).toMatch(/^[a-f\d]{64}$/);
+    expect(JSON.stringify(init)).not.toContain(env.ATLAS_STOREFRONT_API_KEY);
+  });
+
   it('does not call Atlas while the feature is disabled', async () => {
     vi.stubEnv('STORE_ENABLED', 'false');
     const fetchMock = vi.fn();

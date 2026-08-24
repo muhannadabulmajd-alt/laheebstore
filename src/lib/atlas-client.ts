@@ -10,10 +10,37 @@ export class AtlasClientError extends Error {
   }
 }
 
-export async function atlasRequest<T>(
-  path: string,
-  options: { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown; idempotencyKey?: string; authorization?: string; signal?: AbortSignal } = {},
-): Promise<T> {
+type AtlasRequestOptions = {
+  method?: 'GET' | 'POST' | 'DELETE';
+  body?: unknown;
+  idempotencyKey?: string;
+  authorization?: string;
+  signal?: AbortSignal;
+  accept?: string;
+  ifNoneMatch?: string | null;
+};
+
+const ATLAS_MEDIA_PREFIX = '/api/storefront/v1/media/';
+
+export function localizeAtlasMediaUrls<T>(value: T, siteUrl: string): T {
+  if (typeof value === 'string' && value.startsWith(ATLAS_MEDIA_PREFIX)) {
+    return `${siteUrl}/api/media/${value.slice(ATLAS_MEDIA_PREFIX.length)}` as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => localizeAtlasMediaUrls(item, siteUrl)) as T;
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, localizeAtlasMediaUrls(item, siteUrl)]),
+    ) as T;
+  }
+  return value;
+}
+
+async function atlasFetch(path: string, options: AtlasRequestOptions = {}): Promise<{
+  response: Response;
+  siteUrl: string;
+}> {
   const config = readStoreConfig();
   if (!config.enabled || !config.atlasApiUrl || !config.atlasApiKey || !config.siteUrl) {
     throw new AtlasClientError('store_disabled', 404);
@@ -24,7 +51,7 @@ export async function atlasRequest<T>(
   const timestamp = String(Math.floor(Date.now() / 1000));
   const signature = createAtlasSignature({ apiKey: config.atlasApiKey, timestamp, method, path, body });
   const headers: Record<string, string> = {
-    Accept: 'application/json',
+    Accept: options.accept ?? 'application/json',
     Origin: config.siteUrl,
     [ATLAS_TIMESTAMP_HEADER]: timestamp,
     [ATLAS_SIGNATURE_HEADER]: signature,
@@ -32,6 +59,7 @@ export async function atlasRequest<T>(
   if (body) headers['Content-Type'] = 'application/json';
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
   if (options.authorization) headers.Authorization = `Bearer ${options.authorization}`;
+  if (options.ifNoneMatch) headers['If-None-Match'] = options.ifNoneMatch;
   if (config.atlasVercelBypassSecret) {
     headers['x-vercel-protection-bypass'] = config.atlasVercelBypassSecret;
   }
@@ -43,6 +71,14 @@ export async function atlasRequest<T>(
     cache: 'no-store',
     signal: options.signal ?? AbortSignal.timeout(8_000),
   });
+  return { response, siteUrl: config.siteUrl };
+}
+
+export async function atlasRequest<T>(
+  path: string,
+  options: AtlasRequestOptions = {},
+): Promise<T> {
+  const { response, siteUrl } = await atlasFetch(path, options);
   const payload = await response.json().catch(() => null) as { error?: string } | T | null;
   if (!response.ok) {
     const code = payload && typeof payload === 'object' && 'error' in payload && typeof payload.error === 'string'
@@ -51,5 +87,16 @@ export async function atlasRequest<T>(
     throw new AtlasClientError(code, response.status);
   }
   if (!payload) throw new AtlasClientError('atlas_invalid_response', 502);
-  return payload as T;
+  return localizeAtlasMediaUrls(payload as T, siteUrl);
+}
+
+export async function atlasMediaResponse(path: string, ifNoneMatch?: string | null): Promise<Response> {
+  if (!path.startsWith(ATLAS_MEDIA_PREFIX)) throw new AtlasClientError('invalid_media_path', 400);
+  const { response } = await atlasFetch(path, {
+    accept: 'image/avif,image/webp,image/png,image/jpeg,*/*',
+    ifNoneMatch,
+  });
+  if (response.ok || response.status === 304) return response;
+  const payload = await response.json().catch(() => null) as { error?: string } | null;
+  throw new AtlasClientError(payload?.error ?? 'media_unavailable', response.status);
 }
