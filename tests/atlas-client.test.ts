@@ -4,6 +4,7 @@ const env = {
   STORE_ENABLED: 'true', VERCEL_ENV: 'preview',
   ATLAS_API_URL: 'https://dashboard-git-staging.example.vercel.app',
   ATLAS_STOREFRONT_API_KEY: 'k'.repeat(40), AUTH_SECRET: 'a'.repeat(40),
+  ATLAS_VERCEL_BYPASS_SECRET: 'b'.repeat(32),
   NEXT_PUBLIC_SITE_URL: 'https://store-git-staging.example.vercel.app',
 };
 
@@ -25,6 +26,7 @@ describe('Atlas server client', () => {
     const headers = init?.headers as Record<string, string>;
     expect(headers.Origin).toBe(env.NEXT_PUBLIC_SITE_URL);
     expect(headers['x-atlas-signature']).toMatch(/^[a-f\d]{64}$/);
+    expect(headers['x-vercel-protection-bypass']).toBe(env.ATLAS_VERCEL_BYPASS_SECRET);
     expect(JSON.stringify(init)).not.toContain(env.ATLAS_STOREFRONT_API_KEY);
   });
 
