@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { unlockProtectedPreview } from './preview-access';
 
-test('creates a Wayl test payment link through Store and Atlas Preview', async ({ page, baseURL }, testInfo) => {
+test('creates and protects a Wayl test checkout through Store and Atlas Preview', async ({ page, request, baseURL }, testInfo) => {
   test.skip(process.env.RUN_WAYL_PREVIEW_E2E !== '1', 'Wayl Preview test-mode smoke is opt-in.');
   expect(baseURL, 'PLAYWRIGHT_BASE_URL must target the Store Preview').toBeTruthy();
   expect(new URL(baseURL!).hostname).not.toBe('laheeb.coffee');
@@ -26,15 +26,26 @@ test('creates a Wayl test payment link through Store and Atlas Preview', async (
   await page.getByLabel('Address').fill('Wayl Preview verification address');
   await page.getByLabel('Pay online with Wayl').check();
 
-  const checkoutResultPromise = page.waitForResponse((response) =>
-    new URL(response.url()).pathname === '/api/checkout' && response.request().method() === 'POST')
-    .then(async (response) => ({
+  type CheckoutResult = {
+    status: number;
+    payload: {
+      checkout?: { id: string; paymentMode: string; paymentUrl: string | null; order: { orderNumber: string } };
+      error?: string;
+    };
+  };
+  let resolveCheckoutResult: (result: CheckoutResult) => void = () => undefined;
+  const checkoutResultPromise = new Promise<CheckoutResult>((resolve) => {
+    resolveCheckoutResult = resolve;
+  });
+  await page.route('**/api/checkout', async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    resolveCheckoutResult({
       status: response.status(),
-      payload: await response.json() as {
-        checkout?: { id: string; paymentMode: string; paymentUrl: string | null; order: { orderNumber: string } };
-        error?: string;
-      },
-    }));
+      payload: JSON.parse(body) as CheckoutResult['payload'],
+    });
+    await route.fulfill({ response, body });
+  });
   await page.getByRole('button', { name: 'Create order' }).click();
   const { status, payload } = await checkoutResultPromise;
 
@@ -43,4 +54,24 @@ test('creates a Wayl test payment link through Store and Atlas Preview', async (
   expect(payload.checkout?.order.orderNumber).toMatch(/^LHB-ORD-/);
   expect(payload.checkout?.paymentUrl).toBeTruthy();
   expect(new URL(payload.checkout!.paymentUrl!).protocol).toBe('https:');
+  expect(JSON.stringify(payload)).not.toContain('accessToken');
+
+  const checkoutId = payload.checkout!.id;
+  const checkoutCookie = (await page.context().cookies())
+    .find((cookie) => cookie.name === `laheeb_checkout_access_${checkoutId}`);
+  expect(checkoutCookie).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Lax' });
+
+  const statusUrl = new URL(`/api/checkouts/${encodeURIComponent(checkoutId)}`, baseURL!).toString();
+  const authorizedStatus = await page.request.get(statusUrl);
+  expect(authorizedStatus.status()).toBe(200);
+  await expect(authorizedStatus.json()).resolves.toMatchObject({ checkout: { id: checkoutId } });
+
+  const unauthorizedStatus = await request.get(statusUrl);
+  expect(unauthorizedStatus.status()).toBe(401);
+  await expect(unauthorizedStatus.json()).resolves.toEqual({ error: 'checkout_access_denied' });
+
+  const returnPage = await page.request.get(
+    new URL(`/en/checkout/return?checkout=${encodeURIComponent(checkoutId)}`, baseURL!).toString(),
+  );
+  expect(returnPage.status()).toBe(200);
 });
