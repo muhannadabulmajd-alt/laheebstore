@@ -11,6 +11,7 @@ export type StoreConfig = {
   enabled: boolean;
   atlasApiUrl: string | null;
   atlasApiKey: string | null;
+  atlasVercelBypassSecret: string | null;
   authSecret: string | null;
   siteUrl: string | null;
 };
@@ -28,13 +29,29 @@ function exactHttpsOrigin(value: string | undefined): string | null {
 
 export function readStoreConfig(env: Readonly<Record<string, string | undefined>> = process.env): StoreConfig {
   const enabled = env.STORE_ENABLED === 'true';
-  if (!enabled) return { enabled: false, atlasApiUrl: null, atlasApiKey: null, authSecret: null, siteUrl: null };
+  if (!enabled) {
+    return {
+      enabled: false,
+      atlasApiUrl: null,
+      atlasApiKey: null,
+      atlasVercelBypassSecret: null,
+      authSecret: null,
+      siteUrl: null,
+    };
+  }
 
   const atlasApiUrl = exactHttpsOrigin(env.ATLAS_API_URL);
   const siteUrl = exactHttpsOrigin(env.NEXT_PUBLIC_SITE_URL);
   const atlasApiKey = env.ATLAS_STOREFRONT_API_KEY?.trim() ?? '';
+  const atlasVercelBypassSecret = env.ATLAS_VERCEL_BYPASS_SECRET?.trim() || null;
   const authSecret = env.AUTH_SECRET?.trim() ?? '';
-  if (!atlasApiUrl || !siteUrl || atlasApiKey.length < 32 || authSecret.length < 32) {
+  if (
+    !atlasApiUrl
+    || !siteUrl
+    || atlasApiKey.length < 32
+    || authSecret.length < 32
+    || (atlasVercelBypassSecret !== null && atlasVercelBypassSecret.length < 16)
+  ) {
     throw new StoreConfigError('invalid_configuration');
   }
 
@@ -46,5 +63,5 @@ export function readStoreConfig(env: Readonly<Record<string, string | undefined>
     throw new StoreConfigError('wrong_environment');
   }
 
-  return { enabled: true, atlasApiUrl, atlasApiKey, authSecret, siteUrl };
+  return { enabled: true, atlasApiUrl, atlasApiKey, atlasVercelBypassSecret, authSecret, siteUrl };
 }

@@ -32,6 +32,9 @@ export async function atlasRequest<T>(
   if (body) headers['Content-Type'] = 'application/json';
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
   if (options.authorization) headers.Authorization = `Bearer ${options.authorization}`;
+  if (config.atlasVercelBypassSecret) {
+    headers['x-vercel-protection-bypass'] = config.atlasVercelBypassSecret;
+  }
 
   const response = await fetch(`${config.atlasApiUrl}${path}`, {
     method,

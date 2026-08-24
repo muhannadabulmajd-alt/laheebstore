@@ -15,7 +15,15 @@ describe('client secret boundary', () => {
       const source = readFileSync(path, 'utf8');
       return source.startsWith("'use client'");
     });
-    const forbidden = ['ATLAS_STOREFRONT_API_KEY', 'WAYL_API_TOKEN', 'WAYL_WEBHOOK_SECRET', 'BLOB_READ_WRITE_TOKEN', 'AUTH_SECRET', '@/lib/atlas-client'];
+    const forbidden = [
+      'ATLAS_STOREFRONT_API_KEY',
+      'ATLAS_VERCEL_BYPASS_SECRET',
+      'WAYL_API_TOKEN',
+      'WAYL_WEBHOOK_SECRET',
+      'BLOB_READ_WRITE_TOKEN',
+      'AUTH_SECRET',
+      '@/lib/atlas-client',
+    ];
     for (const path of clientFiles) {
       const source = readFileSync(path, 'utf8');
       for (const value of forbidden) expect(source, `${path} contains ${value}`).not.toContain(value);
