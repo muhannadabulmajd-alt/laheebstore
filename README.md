@@ -1,1 +1,2 @@
 # laheebstore
+Staging deployment initialized.
