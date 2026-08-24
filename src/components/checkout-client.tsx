@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, LockKeyhole } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Checkout, DeliveryZone, Quote } from '@/lib/atlas-types';
 import { quoteLines } from '@/lib/cart';
+import { checkoutReturnPath } from '@/lib/checkout-return';
 import { localized, money, storeCopy, type StoreLocale } from '@/lib/i18n';
 import { useCart } from './cart-provider';
 
@@ -86,7 +87,7 @@ export function CheckoutClient({ locale, zones }: { locale: StoreLocale; zones: 
 
   if (!ready) return <div className="empty-state">{t.loading}</div>;
   if (!items.length && !checkout) return <div className="empty-state"><h2>{t.emptyCart}</h2><Link className="primary-button" href={`/${locale}`}>{t.continueShopping}</Link></div>;
-  if (checkout) return <div className="checkout-success"><CheckCircle2 size={48} /><h2>{t.orderCreated}</h2><strong>{checkout.order.orderNumber}</strong><p>{checkout.paymentMode === 'COD' ? t.codPending : t.paymentPending}</p><Link className="primary-button" href={`/${locale}/checkout/return?checkout=${checkout.id}`}>{t.checkStatus}</Link></div>;
+  if (checkout) return <div className="checkout-success"><CheckCircle2 size={48} /><h2>{t.orderCreated}</h2><strong>{checkout.order.orderNumber}</strong><p>{checkout.paymentMode === 'COD' ? t.codPending : t.paymentPending}</p><Link className="primary-button" href={checkoutReturnPath(locale, checkout.id)}>{t.checkStatus}</Link></div>;
   const quote = quoteState.status === 'ready' ? quoteState.quote : null;
   const Back = locale === 'ar' ? ArrowRight : ArrowLeft;
   return (

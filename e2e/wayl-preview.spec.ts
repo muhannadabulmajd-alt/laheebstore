@@ -71,7 +71,15 @@ test('creates and protects a Wayl test checkout through Store and Atlas Preview'
   await expect(unauthorizedStatus.json()).resolves.toEqual({ error: 'checkout_access_denied' });
 
   const returnPage = await page.request.get(
-    new URL(`/en/checkout/return?checkout=${encodeURIComponent(checkoutId)}`, baseURL!).toString(),
+    new URL(`/en/checkout/return/${encodeURIComponent(checkoutId)}`, baseURL!).toString(),
   );
   expect(returnPage.status()).toBe(200);
+
+  const legacyWaylReturnPage = await page.request.get(
+    new URL(
+      `/en/checkout/return?checkout=${encodeURIComponent(checkoutId)}/?referenceId=${encodeURIComponent(payload.checkout!.order.orderNumber)}&orderid=wayl-preview-order`,
+      baseURL!,
+    ).toString(),
+  );
+  expect(legacyWaylReturnPage.status()).toBe(200);
 });
