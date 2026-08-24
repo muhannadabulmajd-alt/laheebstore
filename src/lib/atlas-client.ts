@@ -106,16 +106,36 @@ export async function atlasRequest<T>(
   path: string,
   options: AtlasRequestOptions = {},
 ): Promise<T> {
-  const { response, siteUrl } = await atlasFetch(path, options);
-  const payload = await response.json().catch(() => null) as { error?: string } | T | null;
-  if (!response.ok) {
-    const code = payload && typeof payload === 'object' && 'error' in payload && typeof payload.error === 'string'
-      ? payload.error
-      : 'atlas_unavailable';
-    throw new AtlasClientError(code, response.status);
+  const retryable = (options.method ?? 'GET') === 'GET' || Boolean(options.idempotencyKey);
+  const attempts = retryable ? 2 : 1;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const { response, siteUrl } = await atlasFetch(path, options);
+      const payload = await response.json().catch(() => null) as { error?: string } | T | null;
+      if (!response.ok) {
+        const code = payload && typeof payload === 'object' && 'error' in payload && typeof payload.error === 'string'
+          ? payload.error
+          : 'atlas_unavailable';
+        const error = new AtlasClientError(code, response.status);
+        if (attempt + 1 < attempts && [429, 502, 503, 504].includes(response.status)) {
+          lastError = error;
+          continue;
+        }
+        throw error;
+      }
+      if (!payload) throw new AtlasClientError('atlas_invalid_response', 502);
+      return localizeAtlasMediaUrls(payload as T, siteUrl);
+    } catch (error) {
+      if (error instanceof AtlasClientError) throw error;
+      lastError = error;
+      if (attempt + 1 >= attempts) break;
+    }
   }
-  if (!payload) throw new AtlasClientError('atlas_invalid_response', 502);
-  return localizeAtlasMediaUrls(payload as T, siteUrl);
+
+  void lastError;
+  throw new AtlasClientError('atlas_unavailable', 503);
 }
 
 export async function atlasMediaResponse(path: string, ifNoneMatch?: string | null): Promise<Response> {

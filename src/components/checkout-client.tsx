@@ -65,6 +65,15 @@ export function CheckoutClient({ locale, zones }: { locale: StoreLocale; zones: 
         if (payload.error === 'quote_changed') setQuoteState({ status: 'loading' });
         throw new Error(payload.error || 'checkout_failed');
       }
+      void fetch('/api/customer/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          orderNumber: payload.checkout.order.orderNumber,
+          phone: body.customer.phone,
+        }),
+      }).catch(() => undefined);
       clear();
       setCheckout(payload.checkout);
       if (payload.checkout.paymentMode === 'WAYL' && payload.checkout.paymentUrl) window.location.assign(payload.checkout.paymentUrl);
