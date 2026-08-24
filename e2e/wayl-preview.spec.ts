@@ -26,16 +26,19 @@ test('creates a Wayl test payment link through Store and Atlas Preview', async (
   await page.getByLabel('Address').fill('Wayl Preview verification address');
   await page.getByLabel('Pay online with Wayl').check();
 
-  const checkoutResponsePromise = page.waitForResponse((response) =>
-    new URL(response.url()).pathname === '/api/checkout' && response.request().method() === 'POST');
+  const checkoutResultPromise = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === '/api/checkout' && response.request().method() === 'POST')
+    .then(async (response) => ({
+      status: response.status(),
+      payload: await response.json() as {
+        checkout?: { id: string; paymentMode: string; paymentUrl: string | null; order: { orderNumber: string } };
+        error?: string;
+      },
+    }));
   await page.getByRole('button', { name: 'Create order' }).click();
-  const checkoutResponse = await checkoutResponsePromise;
-  const payload = await checkoutResponse.json() as {
-    checkout?: { id: string; paymentMode: string; paymentUrl: string | null; order: { orderNumber: string } };
-    error?: string;
-  };
+  const { status, payload } = await checkoutResultPromise;
 
-  expect(checkoutResponse.status(), payload.error ?? 'Wayl checkout failed').toBe(201);
+  expect(status, payload.error ?? 'Wayl checkout failed').toBe(201);
   expect(payload.checkout?.paymentMode).toBe('WAYL');
   expect(payload.checkout?.order.orderNumber).toMatch(/^LHB-ORD-/);
   expect(payload.checkout?.paymentUrl).toBeTruthy();
