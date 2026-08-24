@@ -144,4 +144,48 @@ describe('Atlas server client', () => {
     expect(headers.Authorization).toBe('Bearer customer-session-token');
     expect(headers['x-atlas-signature']).toMatch(/^[a-f\d]{64}$/);
   });
+
+  it('retries a transient checkout failure only when the request is idempotent', async () => {
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'temporarily_unavailable' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ checkout: { id: 'checkout-1' } }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { atlasRequest } = await import('@/lib/atlas-client');
+    const result = await atlasRequest<{ checkout: { id: string } }>('/api/storefront/v1/checkouts', {
+      method: 'POST',
+      body: { paymentMode: 'COD' },
+      idempotencyKey: 'checkout-idempotency-key',
+    });
+
+    expect(result.checkout.id).toBe('checkout-1');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const firstHeaders = fetchMock.mock.calls[0][1]?.headers as Record<string, string>;
+    const secondHeaders = fetchMock.mock.calls[1][1]?.headers as Record<string, string>;
+    expect(firstHeaders['Idempotency-Key']).toBe('checkout-idempotency-key');
+    expect(secondHeaders['Idempotency-Key']).toBe('checkout-idempotency-key');
+  });
+
+  it('does not retry a transient mutation without an idempotency key', async () => {
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ error: 'temporarily_unavailable' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { atlasRequest, AtlasClientError } = await import('@/lib/atlas-client');
+    await expect(atlasRequest('/api/storefront/v1/sessions', {
+      method: 'POST',
+      body: { orderNumber: 'LHB-ORD-TEST' },
+    })).rejects.toBeInstanceOf(AtlasClientError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

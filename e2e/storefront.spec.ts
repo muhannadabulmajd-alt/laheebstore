@@ -34,6 +34,6 @@ test('catalog to COD checkout uses live Preview catalog and Atlas quote', async 
   await page.getByLabel('Cash on delivery').check();
   await page.getByRole('button', { name: 'Create order' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Your order was created' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your order was created' })).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.checkout-success strong')).toContainText('LHB-ORD-');
 });
