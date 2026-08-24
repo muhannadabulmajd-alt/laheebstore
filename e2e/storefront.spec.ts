@@ -1,12 +1,17 @@
 import { expect, test } from '@playwright/test';
+import { unlockProtectedPreview } from './preview-access';
 
 test('catalog to COD checkout uses live Preview catalog and Atlas quote', async ({ page, baseURL }) => {
   expect(baseURL, 'PLAYWRIGHT_BASE_URL must target the Store Preview').toBeTruthy();
   expect(new URL(baseURL!).hostname).not.toBe('laheeb.coffee');
 
+  await unlockProtectedPreview(page, baseURL!, process.env.PLAYWRIGHT_STORE_SHARE_TOKEN);
   await page.goto('/en');
   const firstProduct = page.locator('.product-card').first();
   await expect(firstProduct).toBeVisible();
+  const productImage = firstProduct.locator('img');
+  await expect(productImage).toBeVisible();
+  expect(await productImage.getAttribute('src')).toContain('/api/media/');
   await firstProduct.locator('a[href*="/products/"]').first().click();
 
   const addButton = page.getByRole('button', { name: 'Add to cart' });
