@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { unlockProtectedPreview } from './preview-access';
 
 test('creates a Wayl test payment link through Store and Atlas Preview', async ({ page, baseURL }, testInfo) => {
-  test.skip(process.env.RUN_WAYL_PREVIEW_E2E !== '1', 'Wayl staging smoke is opt-in.');
+  test.skip(process.env.RUN_WAYL_PREVIEW_E2E !== '1', 'Wayl Preview test-mode smoke is opt-in.');
   expect(baseURL, 'PLAYWRIGHT_BASE_URL must target the Store Preview').toBeTruthy();
   expect(new URL(baseURL!).hostname).not.toBe('laheeb.coffee');
 
@@ -23,7 +23,7 @@ test('creates a Wayl test payment link through Store and Atlas Preview', async (
   await page.getByLabel('Full name').fill('Wayl Preview Test');
   await page.getByLabel('Mobile number').fill(previewPhone);
   await page.getByLabel('Governorate').fill('Baghdad');
-  await page.getByLabel('Address').fill('Wayl staging verification address');
+  await page.getByLabel('Address').fill('Wayl Preview verification address');
   await page.getByLabel('Pay online with Wayl').check();
 
   const checkoutResponsePromise = page.waitForResponse((response) =>

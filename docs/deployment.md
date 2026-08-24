@@ -21,6 +21,11 @@ operations stay inside Atlas.
 Preview and Production must use different API and session secrets. Preview must point to
 the Atlas staging branch URL, while Production points to `https://dashboard.laheeb.coffee`.
 
+Wayl remains server-only in Atlas. Wayl support confirmed that Atlas Preview and Production
+both call `https://api.thewayl.com`; Atlas keeps them isolated with separate credentials and
+`WAYL_ENV=test` for Preview versus `WAYL_ENV=live` for Production. Do not add Wayl variables
+to this Store project.
+
 ## Protected Preview verification
 
 Generate an automation bypass under the Store project's Vercel Deployment Protection
@@ -36,7 +41,7 @@ not an application credential and must not be committed.
 ## Coordinated staging release
 
 1. Merge and deploy the Atlas `staging` branch without build cache.
-2. Verify its migration, catalog API, private media route, CORS, and Wayl staging client.
+2. Verify its migration, catalog API, private media route, CORS, and Wayl test-mode client.
 3. Merge and deploy the Store `staging` branch without build cache.
 4. Run the remote desktop and mobile storefront journey against the exact Store deployment.
 5. Inspect Preview runtime logs and browser assets for leaked secrets.
