@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { unlockProtectedPreview } from './preview-access';
 
-test('creates and protects a Wayl test checkout through Store and Atlas Preview', async ({ page, request, baseURL }, testInfo) => {
+test('creates and protects a Wayl test checkout through Store and Atlas Preview', async ({ browser, page, baseURL }, testInfo) => {
   test.skip(process.env.RUN_WAYL_PREVIEW_E2E !== '1', 'Wayl Preview test-mode smoke is opt-in.');
   expect(baseURL, 'PLAYWRIGHT_BASE_URL must target the Store Preview').toBeTruthy();
   expect(new URL(baseURL!).hostname).not.toBe('laheeb.coffee');
@@ -29,7 +29,13 @@ test('creates and protects a Wayl test checkout through Store and Atlas Preview'
   type CheckoutResult = {
     status: number;
     payload: {
-      checkout?: { id: string; paymentMode: string; paymentUrl: string | null; order: { orderNumber: string } };
+      checkout?: {
+        id: string;
+        paymentMode: string;
+        paymentUrl: string | null;
+        expiresAt: string | null;
+        order: { orderNumber: string };
+      };
       error?: string;
     };
   };
@@ -54,6 +60,10 @@ test('creates and protects a Wayl test checkout through Store and Atlas Preview'
   expect(payload.checkout?.order.orderNumber).toMatch(/^LHB-ORD-/);
   expect(payload.checkout?.paymentUrl).toBeTruthy();
   expect(new URL(payload.checkout!.paymentUrl!).protocol).toBe('https:');
+  expect(payload.checkout?.expiresAt).toBeTruthy();
+  const expiryMinutes = (new Date(payload.checkout!.expiresAt!).getTime() - Date.now()) / 60_000;
+  expect(expiryMinutes).toBeGreaterThan(13);
+  expect(expiryMinutes).toBeLessThanOrEqual(15.5);
   expect(JSON.stringify(payload)).not.toContain('accessToken');
 
   const checkoutId = payload.checkout!.id;
@@ -66,9 +76,17 @@ test('creates and protects a Wayl test checkout through Store and Atlas Preview'
   expect(authorizedStatus.status()).toBe(200);
   await expect(authorizedStatus.json()).resolves.toMatchObject({ checkout: { id: checkoutId } });
 
-  const unauthorizedStatus = await request.get(statusUrl);
+  const unauthorizedContext = await browser.newContext();
+  const unauthorizedPage = await unauthorizedContext.newPage();
+  await unlockProtectedPreview(
+    unauthorizedPage,
+    baseURL!,
+    process.env.PLAYWRIGHT_STORE_SHARE_TOKEN,
+  );
+  const unauthorizedStatus = await unauthorizedContext.request.get(statusUrl);
   expect(unauthorizedStatus.status()).toBe(401);
   await expect(unauthorizedStatus.json()).resolves.toEqual({ error: 'checkout_access_denied' });
+  await unauthorizedContext.close();
 
   const returnPage = await page.request.get(
     new URL(`/en/checkout/return/${encodeURIComponent(checkoutId)}`, baseURL!).toString(),
